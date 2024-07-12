@@ -74,6 +74,7 @@ jobs:
           echo ${{ secrets.KUBE_CONFIG_DATA }} | base64 -d > ~/.kube/config
         else
           aws eks update-kubeconfig --region ${{ secrets.AWS_REGION }} --name ${{ secrets.AWS_EKS_NAME }}
+        fi
         
     - name: Set up aws-iam-authenticator
       run: |-
