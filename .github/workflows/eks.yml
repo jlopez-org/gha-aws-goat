@@ -68,7 +68,12 @@ jobs:
         
     - name: Set up kubeconfig
       run: |-
-          aws eks update-kubeconfig --name ${{ secrets.AWS_EKS_NAME }}
+        if [ -z "${{ secrets.AWS_EKS_NAME }}" ]
+        then
+          mkdir ~/.kube
+          echo ${{ secrets.KUBE_CONFIG_DATA }} | base64 -d > ~/.kube/config
+        else
+          aws eks update-kubeconfig --region ${{ secrets.AWS_REGION }} --name ${{ secrets.AWS_EKS_NAME }}
         
     - name: Set up aws-iam-authenticator
       run: |-
