@@ -66,7 +66,6 @@ jobs:
         echo "Pushing image to ECR..."
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
         
-    # Container Deployment
     - name: Set up kubeconfig
       run: |-
         if [ -z "${{ secrets.AWS_EKS_NAME }}" ]
@@ -76,11 +75,13 @@ jobs:
         else
           aws eks update-kubeconfig --name ${{ secrets.AWS_EKS_NAME }}
         fi
+        
     - name: Set up aws-iam-authenticator
       run: |-
         curl -Lo aws-iam-authenticator https://github.com/kubernetes-sigs/aws-iam-authenticator/releases/download/v0.5.9/aws-iam-authenticator_0.5.9_linux_amd64
         chmod +x ./aws-iam-authenticator
         mv aws-iam-authenticator /usr/local/bin
+        
     - name: Deploy to Kubernetes cluster
       run: |-
         kustomize create --resources eks-deployment.yml
@@ -88,3 +89,4 @@ jobs:
         cat kustomization.yaml
         kustomize build . | kubectl apply -f -
         kubectl get pods -o wide
+        
