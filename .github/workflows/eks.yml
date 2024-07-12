@@ -85,7 +85,7 @@ jobs:
     - name: Deploy to Kubernetes cluster
       run: |-
         kustomize create --resources eks-deployment.yml
-        kustomize edit set image "demo-image-name=${{ steps.login-ecr.outputs.registry }}/${{ secrets.REPO_NAME }}:${{ github.sha }}" --validate=false
+        kustomize edit set image "demo-image-name=${{ steps.login-ecr.outputs.registry }}/${{ secrets.REPO_NAME }}:${{ github.sha }}"
         cat kustomization.yaml
         kustomize build . | kubectl apply -f -
         kubectl get pods -o wide
