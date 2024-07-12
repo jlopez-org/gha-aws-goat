@@ -47,7 +47,7 @@ jobs:
       id: checkov
       uses: bridgecrewio/checkov-action@master
       env:
-        PRISMA_API_URL: ${{ secrets.PCC_CONSOLE_URL }}
+        PRISMA_API_URL: ${{ secrets.PCCS_CONSOLE_URL }}
       with:
         docker_image: ${{ steps.login-ecr.outputs.registry }}/${{ secrets.REPO_NAME }}:${{ github.sha }}
         dockerfile_path: "./Dockerfile"
