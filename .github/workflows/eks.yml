@@ -41,7 +41,17 @@ jobs:
       run: |
         # Build a docker container and push it to ECR 
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-        
+
+    # Prisma Cloud Code Security Scan
+    - name: Prisma Cloud Code Security Scan
+      id: checkov
+      uses: bridgecrewio/checkov-action@master
+      env:
+        PRISMA_API_URL: ${{ secrets.PCC_CONSOLE_URL }}
+      with:
+        docker_image: ${{ steps.login-ecr.outputs.registry }}/${{ secrets.REPO_NAME }}:${{ github.sha }}
+        api-key: ${{ secrets.PCC_USER }}::${{ secrets.PCC_PASS }}
+    
     # Prisma Cloud Image Security Scan
     - name: Prisma Cloud Image Scan
       id: scan
