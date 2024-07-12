@@ -39,7 +39,6 @@ jobs:
         IMAGE_TAG: ${{ github.sha }}
       run: |
         # Build a docker container and push it to ECR 
-        echo $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
         
     # Prisma Cloud Image Security Scan
@@ -87,6 +86,7 @@ jobs:
       run: |-
         kustomize create --resources eks-deployment.yml
         kustomize edit set image "demo-image-name=${{ steps.login-ecr.outputs.registry }}/${{ secrets.REPO_NAME }}:${{ github.sha }}"
+        echo $demo-image-name
         cat kustomization.yaml
         kustomize build . | kubectl apply -f -
         kubectl get pods -o wide
