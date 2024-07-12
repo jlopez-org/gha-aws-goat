@@ -68,6 +68,7 @@ jobs:
         
     - name: Set up kubeconfig
       run: |-
+          mkdir ~/.kube
           echo ${{ secrets.KUBE_CONFIG_DATA }} | base64 -d > ~/.kube/config
         
     - name: Set up aws-iam-authenticator
