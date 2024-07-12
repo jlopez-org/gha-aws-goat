@@ -50,7 +50,7 @@ jobs:
         PRISMA_API_URL: ${{ secrets.PCC_CONSOLE_URL }}
       with:
         docker_image: ${{ steps.login-ecr.outputs.registry }}/${{ secrets.REPO_NAME }}:${{ github.sha }}
-        dockerfile-path: "./Dockerfile"
+        dockerfile_path: "./Dockerfile"
         api-key: ${{ secrets.PCC_USER }}::${{ secrets.PCC_PASS }}
     
     # Prisma Cloud Image Security Scan
