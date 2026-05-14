@@ -75,32 +75,14 @@ jobs:
         ECR_REPOSITORY: ${{ secrets.REPO_NAME }}
         IMAGE_TAG: ${{ github.sha }}
       run: |
-        # 1. Get the signed download link from the Public API
-        echo "Requesting download link..."
-        crtx_resp=$(curl -s -H "x-xdr-auth-id: ${{ secrets.CORTEX_API_ID }}" \
-          -H "Authorization: ${{ secrets.CORTEX_API_KEY }}" \
-          "${{ vars.CORTEX_API_URL }}/public_api/v1/unified-cli/releases/download-link?os=linux&architecture=amd64")
-
-        # 2. Extract the signed URL using jq
-        crtx_url=$(echo "$crtx_resp" | jq -r '.signed_url')
-    
-        # Validation: Ensure we actually got a URL and not an error message
-        if [[ "$crtx_url" == "null" || "$crtx_url" == "" ]]; then
-          echo "Error: Could not get signed URL. API Response:"
-          echo "$crtx_resp"
-          exit 1
-        fi
-    
-        # 3. Download the actual binary
-        echo "Downloading binary..."
-        curl -sSL -o cortexcli "$crtx_url"
+        crtx_resp=$(curl -s "${{ vars.CORTEX_API_URL }}/public_api/v1/unified-cli/releases/download-link?os=linux&architecture=amd64" -H "x-xdr-auth-id: ${{ secrets.CORTEX_API_ID }}" -H "Authorization: ${{ secrets.CORTEX_API_KEY }}") && crtx_url=$(echo $crtx_resp | jq -r ".signed_url") && crtx_file=$(echo $crtx_resp | jq -r ".file_name") && curl -o $crtx_file $crtx_url 
     
         # 4. Make executable and verify
         chmod +x cortexcli
         ./cortexcli --version
         
         # 4. Scan the Image with Cortex CLI
-        ./cortexcli --api-base-url ${{ vars.CORTEX_FQDN }} --api-key $CORTEX_API_KEY --api-key-id $CORTEX_API_ID image scan ${{ steps.login-ecr.outputs.registry }}/${{ secrets.REPO_NAME }}:${{ github.sha }}
+        ./cortexcli --api-base-url ${{ vars.CORTEX_FQDN }} --api-key ${{ secrets.CORTEX_API_KEY }} --api-key-id ${{ secrets.CORTEX_API_ID }} image scan ${{ steps.login-ecr.outputs.registry }}/${{ secrets.REPO_NAME }}:${{ github.sha }}
     
     # (Optional) for compatibility with GitHub's code scanning alerts
     # - name: Upload SARIF file
