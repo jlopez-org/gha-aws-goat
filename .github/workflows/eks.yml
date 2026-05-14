@@ -68,7 +68,7 @@ jobs:
     #     image_name: ${{ steps.login-ecr.outputs.registry }}/${{ secrets.REPO_NAME }}:${{ github.sha }}
 
     # Cortex Cloud Image Security Scan
-    - name: Cortex Cloud Image Scam 
+    - name: Cortex Cloud Image Scan 
       id: scan
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
@@ -76,7 +76,7 @@ jobs:
         IMAGE_TAG: ${{ github.sha }}
       run: |
         # Download Cortex CLI
-        crtx_resp=$(curl -s "https://${{ vars.CORTEX_FQDN }}/public_api/v1/unified-cli/releases/download-link?os=linux&architecture=amd64" -H "x-xdr-auth-id: ${{ secrets.CORTEX_API_ID }}" -H "Authorization: ${{ secrets.CORTEX_API_KEY }}") && crtx_url=$(echo $crtx_resp | jq -r ".signed_url") && crtx_file=$(echo $crtx_resp | jq -r ".file_name") && curl -o $crtx_file $crtx_url 
+        curl -k -u $CORTEX_API_ID::$CORTEX_API_KEY --output ./cortexcli ${{ vars.CORTEX_FQDN }}/api/v2/remote-li/v1/amd64/artifacts
         ls | grep cortexcli
         chmod +x cortexcli
     
