@@ -54,25 +54,39 @@ jobs:
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
     
     # Prisma Cloud Image Security Scan
-    - name: Prisma Cloud Image Scan
+    # - name: Prisma Cloud Image Scan
+    #   id: scan
+    #   env:
+    #     ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+    #     ECR_REPOSITORY: ${{ secrets.REPO_NAME }}
+    #     IMAGE_TAG: ${{ github.sha }}
+    #   uses: PaloAltoNetworks/prisma-cloud-scan@v1.4.0
+    #   with:
+    #     pcc_console_url: ${{ secrets.PCC_CONSOLE_URL }}
+    #     pcc_user: ${{ secrets.PCC_USER }}
+    #     pcc_pass: ${{ secrets.PCC_PASS }}
+    #     image_name: ${{ steps.login-ecr.outputs.registry }}/${{ secrets.REPO_NAME }}:${{ github.sha }}
+
+    # Cortex Cloud Image Security Scan
+    - name: Cortex Cloud Image Scam 
       id: scan
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         ECR_REPOSITORY: ${{ secrets.REPO_NAME }}
         IMAGE_TAG: ${{ github.sha }}
-      uses: PaloAltoNetworks/prisma-cloud-scan@v1.4.0
-      with:
-        pcc_console_url: ${{ secrets.PCC_CONSOLE_URL }}
-        pcc_user: ${{ secrets.PCC_USER }}
-        pcc_pass: ${{ secrets.PCC_PASS }}
-        image_name: ${{ steps.login-ecr.outputs.registry }}/${{ secrets.REPO_NAME }}:${{ github.sha }}
+      run: |
+        # Download Cortex CLI
+        crtx_resp=$(curl -s "https://${{ vars.CORTEX_FQDN }}/public_api/v1/unified-cli/releases/download-link?os=linux&architecture=amd64" -H "x-xdr-auth-id: ${{ secrets.CORTEX_API_ID }}" -H "Authorization: ${{ secrets.CORTEX_API_KEY }}") && crtx_url=$(echo $crtx_resp | jq -r ".signed_url") && crtx_file=$(echo $crtx_resp | jq -r ".file_name") && curl -o $crtx_file $crtx_url 
+        ls | grep cortexcli
+        chmod +x cortexcli
+    
 
     # (Optional) for compatibility with GitHub's code scanning alerts
-    - name: Upload SARIF file
-      if: ${{ always() }} # necessary if using failure thresholds in the image scan
-      uses: github/codeql-action/upload-sarif@v3
-      with:
-        sarif_file: ${{ steps.scan.outputs.sarif_file }}
+    # - name: Upload SARIF file
+    #   if: ${{ always() }} # necessary if using failure thresholds in the image scan
+    #   uses: github/codeql-action/upload-sarif@v3
+    #   with:
+    #     sarif_file: ${{ steps.scan.outputs.sarif_file }}
       
     # Push the Docker image to Amazon ECR
     - name: Tag and Push the image to Amazon ECR
