@@ -74,16 +74,36 @@ jobs:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         ECR_REPOSITORY: ${{ secrets.REPO_NAME }}
         IMAGE_TAG: ${{ github.sha }}
+        CORTEX_ID: ${{ secrets.CORTEX_API_ID }}
+        CORTEX_KEY: ${{ secrets.CORTEX_API_KEY }}
+        API_URL: ${{ vars.CORTEX_API_URL }}
       run: |
-        crtx_resp=$(curl -s "${{ vars.CORTEX_API_URL }}/public_api/v1/unified-cli/releases/download-link?os=linux&architecture=amd64" -H "x-xdr-auth-id: ${{ secrets.CORTEX_API_ID }}" -H "Authorization: ${{ secrets.CORTEX_API_KEY }}") && crtx_url=$(echo $crtx_resp | jq -r ".signed_url") && crtx_file=$(echo $crtx_resp | jq -r ".file_name") && curl -o $crtx_file $crtx_url 
+        # 1. Download CLI using env vars
+        echo "Fetching download link..."
+        crtx_resp=$(curl -s -H "x-xdr-auth-id: $CORTEX_ID" \
+          -H "Authorization: $CORTEX_KEY" \
+          "${API_URL}/public_api/v1/unified-cli/releases/download-link?os=linux&architecture=amd64")
     
-        # 4. Make executable and verify
+        # 2. Extract signed URL
+        crtx_url=$(echo "$crtx_resp" | jq -r ".signed_url")
+    
+        # 3. Check for 401/null to see if secrets were passed correctly
+        if [[ "$crtx_url" == "null" ]]; then
+          echo "Error: API rejected the secrets. Verify there are no extra spaces in your GitHub Secrets."
+          echo "API Response: $crtx_resp"
+          exit 1
+        fi
+
+        echo "Downloading binary..."
+        curl -sSL -o cortexcli "$crtx_url"
         chmod +x cortexcli
-        ./cortexcli --version
-        
-        # 4. Scan the Image with Cortex CLI
-        ./cortexcli --api-base-url ${{ vars.CORTEX_FQDN }} --api-key ${{ secrets.CORTEX_API_KEY }} --api-key-id ${{ secrets.CORTEX_API_ID }} image scan ${{ steps.login-ecr.outputs.registry }}/${{ secrets.REPO_NAME }}:${{ github.sha }}
-    
+
+        # 4. Run the Scan (Ensure no trailing slash on --api-base-url)
+        ./cortexcli --api-base-url "$API_URL" \
+          --api-key "$CORTEX_KEY" \
+          --api-key-id "$CORTEX_ID" \
+          image scan "${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}"
+
     # (Optional) for compatibility with GitHub's code scanning alerts
     # - name: Upload SARIF file
     #   if: ${{ always() }} # necessary if using failure thresholds in the image scan
