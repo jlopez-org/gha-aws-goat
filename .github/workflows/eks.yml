@@ -77,10 +77,9 @@ jobs:
       run: |
         # Download Cortex CLI
         curl -k -u $CORTEX_API_ID::$CORTEX_API_KEY --output ./cortexcli ${{ vars.CORTEX_FQDN }}/api/v2/remote-li/v1/amd64/artifacts
-        ls | grep cortexcli
         chmod +x cortexcli
+        ./cortexcli --api-base-url ${{ vars.CORTEX_FQDN }} --api-key $CORTEX_API_KEY --api-key-id $CORTEX_API_ID image scan ${{ steps.login-ecr.outputs.registry }}/${{ secrets.REPO_NAME }}:${{ github.sha }}
     
-
     # (Optional) for compatibility with GitHub's code scanning alerts
     # - name: Upload SARIF file
     #   if: ${{ always() }} # necessary if using failure thresholds in the image scan
