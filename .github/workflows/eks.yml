@@ -79,7 +79,7 @@ jobs:
         echo "Requesting download link..."
         crtx_resp=$(curl -s -H "x-xdr-auth-id: ${{ secrets.CORTEX_API_ID }}" \
           -H "Authorization: ${{ secrets.CORTEX_API_KEY }}" \
-          "${CORTEX_FQDN}/public_api/v1/unified-cli/releases/download-link?os=linux&architecture=amd64")
+          "${{ vars.CORTEX_FQDN }}/public_api/v1/unified-cli/releases/download-link?os=linux&architecture=amd64")
 
         # 2. Extract the signed URL using jq
         crtx_url=$(echo "$crtx_resp" | jq -r '.signed_url')
