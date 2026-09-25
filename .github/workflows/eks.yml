@@ -137,6 +137,16 @@ jobs:
         curl -Lo aws-iam-authenticator https://github.com/kubernetes-sigs/aws-iam-authenticator/releases/download/v0.5.9/aws-iam-authenticator_0.5.9_linux_amd64
         chmod +x ./aws-iam-authenticator
         mv aws-iam-authenticator /usr/local/bin
+
+    - name: Allow runner IP on EKS endpoint
+      run: |
+          RUNNER_IP=$(curl -s https://checkip.amazonaws.com)/32
+          echo "RUNNER_IP=$RUNNER_IP" >> $GITHUB_ENV
+          CURRENT=$(aws eks describe-cluster --name ${{ vars.AWS_EKS_NAME }} --region ${{ secrets.AWS_REGION }} \
+            --query 'cluster.resourcesVpcConfig.publicAccessCidrs' --output text | tr '\t' ',')
+          aws eks update-cluster-config --name ${{ vars.AWS_EKS_NAME }} --region ${{ secrets.AWS_REGION }} \
+            --resources-vpc-config publicAccessCidrs="${CURRENT},${RUNNER_IP}"
+          aws eks wait cluster-active --name ${{ vars.AWS_EKS_NAME }} --region ${{ secrets.AWS_REGION }}
         
     - name: Deploy to Kubernetes cluster
       run: |-
@@ -145,4 +155,15 @@ jobs:
         cat kustomization.yaml
         kustomize build . | kubectl apply -f - --validate=false
         kubectl get pods -o wide
+
+    - name: Remove runner IP
+      if: always()
+      run: |
+        if [ -z "$RUNNER_IP" ]; then echo "No runner IP added, skipping"; exit 0; fi
+        aws eks wait cluster-active --name ${{ vars.AWS_EKS_NAME }} --region ${{ secrets.AWS_REGION }}
+        REMAINING=$(aws eks describe-cluster --name ${{ vars.AWS_EKS_NAME }} --region ${{ secrets.AWS_REGION }} \
+          --query 'cluster.resourcesVpcConfig.publicAccessCidrs' --output text \
+          | tr '\t' '\n' | grep -vx "$RUNNER_IP" | paste -sd, -)
+        aws eks update-cluster-config --name ${{ vars.AWS_EKS_NAME }} --region ${{ secrets.AWS_REGION }} \
+          --resources-vpc-config publicAccessCidrs="${REMAINING}"
         
