@@ -102,6 +102,7 @@ jobs:
         ./cortexcli --api-base-url "$API_URL" \
           --api-key "$CORTEX_KEY" \
           --api-key-id "$CORTEX_ID" \
+          --log-level INFO \
           image scan --timeout 300 "${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}"
 
     # (Optional) for compatibility with GitHub's code scanning alerts
