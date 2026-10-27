@@ -45,6 +45,11 @@ jobs:
       id: build-image
       run: docker build -t "$IMAGE_URI" .
 
+    - name: Install Cortex CWP scanner dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libhyperscan5
+
     # Cortex Cloud Image Security Scan (official action)
     - name: Cortex Cloud Image Scan
       id: scan
